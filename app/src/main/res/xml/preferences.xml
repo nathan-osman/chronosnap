@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="@string/pref_category_general">
+
+        <ListPreference
+            android:key="interval"
+            android:title="@string/pref_interval"
+            android:entries="@array/pref_interval_titles"
+            android:entryValues="@array/pref_interval_values"
+            android:defaultValue="5" />
+
+        <ListPreference
+            android:key="limit"
+            android:title="@string/pref_limit"
+            android:entries="@array/pref_limit_titles"
+            android:entryValues="@array/pref_limit_values"
+            android:defaultValue="0" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
