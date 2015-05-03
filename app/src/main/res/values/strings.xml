@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">ChronoSnap</string>
+
+    <string name="action_settings">Settings</string>
+
+    <!-- Start / stop capture button -->
+    <string name="button_wait">Please Wait</string>
+    <string name="button_start">Start Capture</string>
+    <string name="button_stop">Stop Capture</string>
+
+    <!-- Instructions displayed in the main activity -->
+    <string name="text_instructions1">
+        After adjusting the camera settings, use the button below to start and stop the image
+        capture.
+    </string>
+    <string name="text_instructions2">
+        Once started, ChronoSnap will continue to take pictures at the specified interval until it
+        is either explicitly stopped or the maximum number of images are captured.
+    </string>
+
+    <!-- Capture Statistics -->
+    <string name="text_statistics">Statistics</string>
+
+    <string name="text_start_time">Start Time:</string>
+    <string name="text_images_captured">Images Captured:</string>
+    <string name="text_images_remaining">Images Remaining:</string>
+
+    <string name="text_na">n/a</string>
+
+</resources>
