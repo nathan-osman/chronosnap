@@ -25,7 +25,7 @@
         android:layout_marginTop="16dp"
         android:enabled="false"
         android:padding="24dp"
-        android:text="@string/button_wait" />
+        android:text="@string/text_loading" />
 
     <TextView
         android:id="@+id/textInstructions2"
@@ -70,7 +70,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_column="1"
-                android:text="@string/text_na" />
+                android:text="@string/text_loading" />
         </TableRow>
 
         <TableRow
@@ -92,7 +92,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_column="1"
-                android:text="@string/text_na" />
+                android:text="@string/text_loading" />
         </TableRow>
 
         <TableRow
@@ -114,7 +114,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_column="1"
-                android:text="@string/text_na" />
+                android:text="@string/text_loading" />
         </TableRow>
     </TableLayout>
 

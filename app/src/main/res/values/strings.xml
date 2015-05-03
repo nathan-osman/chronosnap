@@ -5,8 +5,10 @@
 
     <string name="title_activity_settings">Settings</string>
 
+    <string name="text_loading">Loading...</string>
+    <string name="text_na">n/a</string>
+
     <!-- Start / stop capture button -->
-    <string name="button_wait">Please Wait</string>
     <string name="button_start">Start Capture</string>
     <string name="button_stop">Stop Capture</string>
 
@@ -26,8 +28,6 @@
     <string name="text_start_time">Start Time:</string>
     <string name="text_images_captured">Images Captured:</string>
     <string name="text_images_remaining">Images Remaining:</string>
-
-    <string name="text_na">n/a</string>
 
     <!-- Preferences -->
     <string name="pref_category_general">General</string>
