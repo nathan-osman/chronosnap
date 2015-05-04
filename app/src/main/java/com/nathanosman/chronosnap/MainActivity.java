@@ -27,14 +27,14 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
 
-                Button buttonStartStop = (Button)findViewById(R.id.buttonStartStop);
-                TextView textStartTime = (TextView)findViewById(R.id.textStartTime);
-                TextView textImagesCaptured = (TextView)findViewById(R.id.textImagesCaptured);
-                TextView textImagesRemaining = (TextView)findViewById(R.id.textImagesRemaining);
+                Button buttonStartStop = (Button) findViewById(R.id.buttonStartStop);
+                TextView textStartTime = (TextView) findViewById(R.id.textStartTime);
+                TextView textImagesCaptured = (TextView) findViewById(R.id.textImagesCaptured);
+                TextView textImagesRemaining = (TextView) findViewById(R.id.textImagesRemaining);
 
-                long startTime = intent.getLongExtra(CaptureService.EXTRA_START_TIME, 0);
-                int imagesCaptured = intent.getIntExtra(CaptureService.EXTRA_IMAGES_CAPTURED, 0);
-                int imagesRemaining = intent.getIntExtra(CaptureService.EXTRA_IMAGES_REMAINING, 0);
+                long startTime = intent.getLongExtra (CaptureService.EXTRA_START_TIME, 0);
+                int imagesCaptured = intent.getIntExtra (CaptureService.EXTRA_IMAGES_CAPTURED, 0);
+                int imagesRemaining = intent.getIntExtra (CaptureService.EXTRA_IMAGES_REMAINING, 0);
 
                 // The button is always enabled
                 buttonStartStop.setEnabled(true);
