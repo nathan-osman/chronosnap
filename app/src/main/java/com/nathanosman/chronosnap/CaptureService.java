@@ -8,10 +8,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.os.Environment;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
+
+import java.io.File;
 
 
 public class CaptureService extends Service {
@@ -38,9 +42,10 @@ public class CaptureService extends Service {
     private int mLimit;
 
     private AlarmManager mAlarmManager;
-    private SharedPreferences mPreferences;
-
     private PendingIntent mCaptureIntent;
+
+    private SharedPreferences mPreferences;
+    private File mStorageDirectory;
 
     @Override
     public void onCreate() {
@@ -52,6 +57,10 @@ public class CaptureService extends Service {
         // Ensure that default preferences have been set
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        // Determine the location of the storage directory
+        mStorageDirectory = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES), "ChronoSnap");
     }
 
     @Override
@@ -82,6 +91,15 @@ public class CaptureService extends Service {
     @SuppressWarnings("deprecation")
     private void startCapture() {
 
+        // If it cannot be created, then fire off a toast to let the user know
+        if (! mStorageDirectory.exists()) {
+            if(! mStorageDirectory.mkdirs()) {
+
+                Toast.makeText(this, R.string.toast_error_storage, Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
         // Make this a foreground service, which helps keep it from being killed
         Intent intent = new Intent(this, MainActivity.class);
         Notification notification = new Notification.Builder(this)
@@ -91,11 +109,6 @@ public class CaptureService extends Service {
                 .setContentIntent(PendingIntent.getActivity(this, 0, intent, 0))
                 .getNotification();
         startForeground(NOTIFICATION_ID, notification);
-
-        // Prevent the capture from starting if it's already in progress
-        if (mStartTime != 0) {
-            return;
-        }
 
         mStartTime = System.currentTimeMillis();
         mIndex = 0;
@@ -118,7 +131,6 @@ public class CaptureService extends Service {
         stopForeground(true);
 
         mStartTime = 0;
-
         broadcastInfo();
 
         // Stop the service since we don't need it running anymore
@@ -152,17 +164,19 @@ public class CaptureService extends Service {
         }
     }
 
+    /**
+     * Capture an image
+     */
     private void capture() {
 
         Log.d(CaptureService.class.getName(), "Capturing image #" + String.valueOf(mIndex + 1) + ".");
 
         mIndex++;
-
         broadcastInfo();
 
         // If a limit was supplied, check to make sure we have not gone beyond it
-        if(mLimit != 0) {
-            if(mIndex < mLimit) {
+        if (mLimit != 0) {
+            if (mIndex < mLimit) {
                 setAlarm();
             } else {
                 stopCapture();
