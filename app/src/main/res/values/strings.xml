@@ -8,7 +8,9 @@
     <string name="notification_text">Capture is in progress.</string>
 
     <!-- Toast messages displayed to the user -->
-    <string name="toast_error_storage">Error: unable to create storage directory.</string>
+    <string name="toast_error_storage_dir">Error: unable to create storage directory.</string>
+    <string name="toast_error_storage_img">Error: unable to store captured image.</string>
+    <string name="toast_error_camera">Error: unable to capture an image.</string>
 
     <string name="title_activity_settings">Settings</string>
 

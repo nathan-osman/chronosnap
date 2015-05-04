@@ -7,6 +7,9 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
+import android.media.MediaScannerConnection;
 import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
@@ -16,6 +19,11 @@ import android.util.Log;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
 public class CaptureService extends Service {
@@ -95,7 +103,7 @@ public class CaptureService extends Service {
         if (! mStorageDirectory.exists()) {
             if(! mStorageDirectory.mkdirs()) {
 
-                Toast.makeText(this, R.string.toast_error_storage, Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_error_storage_dir, Toast.LENGTH_SHORT).show();
                 return;
             }
         }
@@ -167,20 +175,70 @@ public class CaptureService extends Service {
     /**
      * Capture an image
      */
+    @SuppressWarnings("deprecation")
     private void capture() {
 
-        Log.d(CaptureService.class.getName(), "Capturing image #" + String.valueOf(mIndex + 1) + ".");
+        Log.d(CaptureService.class.getName(), "Beginning capture of image #" + String.valueOf(mIndex + 1) + ".");
 
-        mIndex++;
-        broadcastInfo();
+        // Open and setup the camera
+        Camera camera = Camera.open();
 
-        // If a limit was supplied, check to make sure we have not gone beyond it
-        if (mLimit != 0) {
-            if (mIndex < mLimit) {
-                setAlarm();
-            } else {
-                stopCapture();
-            }
+        try {
+
+            camera.setPreviewTexture(new SurfaceTexture(0));
+
+        } catch(IOException e) {
+
+            // Something went wrong with the preview, inform the user and halt
+            Toast.makeText(this, R.string.toast_error_camera, Toast.LENGTH_SHORT).show();
+            stopCapture();
+            return;
         }
+
+        // Start the preview and capture the image
+        camera.startPreview();
+        camera.takePicture(null, null, new Camera.PictureCallback() {
+            @Override
+            public void onPictureTaken(byte[] data, Camera camera) {
+
+                Log.d(CaptureService.class.getName(), "Capture complete! Storing image #" + String.valueOf(mIndex + 1) + ".");
+
+                // Immediately release the camera as we are done with it
+                camera.release();
+
+                // Build the correct filename and open the output file
+                String prefix = new SimpleDateFormat("yyyymmdd_hhmmss").format(new Date(mStartTime));
+                File outputFile = new File(mStorageDirectory, prefix + "_" + String.valueOf(mIndex) + ".jpg");
+
+                // Write the data to the file
+                try {
+
+                    OutputStream os = new FileOutputStream(outputFile);
+                    os.write(data);
+                    os.close();
+
+                } catch(IOException e) {
+
+                    // Something went wrong storing the preview
+                    Toast.makeText(CaptureService.this, R.string.toast_error_storage_img, Toast.LENGTH_SHORT).show();
+                    stopCapture();
+                    return;
+                }
+
+                // Pass the file along to the media scanner
+                MediaScannerConnection.scanFile(CaptureService.this,
+                        new String[] { outputFile.getAbsolutePath() }, null, null);
+
+                mIndex++;
+                broadcastInfo();
+
+                // If a limit was supplied, check to make sure we have not gone beyond it
+                if (mLimit == 0 || mIndex < mLimit) {
+                    setAlarm();
+                } else {
+                    stopCapture();
+                }
+            }
+        });
     }
 }
