@@ -18,8 +18,7 @@
 
     <!-- Instructions displayed in the main activity -->
     <string name="text_instructions1">
-        After adjusting the camera settings, use the button below to start and stop the image
-        capture.
+        After adjusting capture settings, use the button below to start and stop the image capture.
     </string>
     <string name="text_instructions2">
         Once started, ChronoSnap will continue to take pictures at the specified interval until it
