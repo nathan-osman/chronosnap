@@ -1,13 +1,14 @@
 package com.nathanosman.chronosnap;
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
-
-import java.util.Date;
 
 
 public class CaptureService extends Service {
@@ -15,6 +16,9 @@ public class CaptureService extends Service {
     public static final String ACTION_START_CAPTURE = "com.nathanosman.chronosnap.action.START_CAPTURE";
     public static final String ACTION_STOP_CAPTURE = "com.nathanosman.chronoshap.action.STOP_CAPTURE";
     public static final String ACTION_GET_INFO = "com.nathanosman.chronosnap.action.GET_INFO";
+
+    // This action is only sent by the alarm
+    private static final String ACTION_CAPTURE = "com.nathanosman.chronosnap.action.CAPTURE";
 
     public static final String BROADCAST_INFO = "com.nathanosman.chronosnap.broadcast.INFO";
 
@@ -26,8 +30,20 @@ public class CaptureService extends Service {
 
     // All of these values are initialized by ACTION_START_CAPTURE
     private long mStartTime;
+    private long mInterval;
     private int mIndex;
     private int mLimit;
+
+    private AlarmManager mAlarmManager;
+    private PendingIntent mCaptureIntent;
+
+    @Override
+    public void onCreate() {
+
+        mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        mCaptureIntent = PendingIntent.getService(this, 0,
+                new Intent(this, CaptureService.class).setAction(ACTION_CAPTURE), 0);
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -41,6 +57,8 @@ public class CaptureService extends Service {
                 handleStopCapture();
             } else if (ACTION_GET_INFO.equals(action)) {
                 broadcastInfo();
+            } else if (ACTION_CAPTURE.equals(action)) {
+                handleCapture();
             }
         }
 
@@ -70,23 +88,30 @@ public class CaptureService extends Service {
             return;
         }
 
-        mStartTime = new Date().getTime();
+        mStartTime = System.currentTimeMillis();
         mIndex = 0;
+
+        // TODO: load the interval and limit from preferences
+        mInterval = 5000;
         mLimit = 0;
 
         broadcastInfo();
+
+        // Set an alarm to capture the first image
+        setAlarm();
     }
 
     private void handleStopCapture() {
 
         // This is no longer a foreground service
+        mAlarmManager.cancel(mCaptureIntent);
         stopForeground(true);
 
         mStartTime = 0;
 
         broadcastInfo();
 
-        // The service will eventually be killed, but here we can speed it up
+        // Stop the service since we don't need it running anymore
         stopSelf();
     }
 
@@ -94,10 +119,35 @@ public class CaptureService extends Service {
      * Send a local intent providing current status information
      */
     private void broadcastInfo() {
+
         Intent intent = new Intent(BROADCAST_INFO);
         intent.putExtra(EXTRA_START_TIME, mStartTime);
         intent.putExtra(EXTRA_IMAGES_CAPTURED, mIndex);
         intent.putExtra(EXTRA_IMAGES_REMAINING, mLimit == 0 ? 0 : mLimit - mIndex);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    /**
+     * Set the alarm for the next capture
+     * KitKat requires a separate method to be called in order to ensure timely delivery
+     */
+    private void setAlarm() {
+
+        long triggerAtMillis = System.currentTimeMillis() + mInterval;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            mAlarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, mCaptureIntent);
+        } else {
+            mAlarmManager.set(AlarmManager.RTC_WAKEUP, triggerAtMillis, mCaptureIntent);
+        }
+    }
+
+    private void handleCapture() {
+
+        mIndex++;
+
+        broadcastInfo();
+
+        // Set an alarm to capture the next image
+        setAlarm();
     }
 }
