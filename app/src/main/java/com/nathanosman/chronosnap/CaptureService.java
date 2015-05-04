@@ -60,7 +60,7 @@ public class CaptureService extends Service {
 
         // Determine the location of the storage directory
         mStorageDirectory = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES), "ChronoSnap");
+                Environment.DIRECTORY_DCIM), "ChronoSnap");
     }
 
     @Override
