@@ -2,9 +2,11 @@
 
 Simple yet intuitive Android application for capturing a sequence of images at regular intervals.
 
-### Features
+### Screenshot
 
-Features:
+![Screenshot](http://i.stack.imgur.com/vm3td.png)
+
+### Features
 
 - Customize the capture interval
 - Set a limit on the number of images captured
