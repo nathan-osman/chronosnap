@@ -3,6 +3,10 @@
 
     <string name="app_name">ChronoSnap</string>
 
+    <!-- Notification displayed during capture -->
+    <string name="notification_title">ChronoSnap Capture</string>
+    <string name="notification_text">Capture is in progress.</string>
+
     <string name="title_activity_settings">Settings</string>
 
     <string name="text_loading">Loading...</string>

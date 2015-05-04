@@ -7,8 +7,10 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
+import android.text.format.DateUtils;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -30,7 +32,7 @@ public class MainActivity extends ActionBarActivity {
                 TextView textImagesCaptured = (TextView)findViewById(R.id.textImagesCaptured);
                 TextView textImagesRemaining = (TextView)findViewById(R.id.textImagesRemaining);
 
-                int startTime = intent.getIntExtra(CaptureService.EXTRA_START_TIME, 0);
+                long startTime = intent.getLongExtra(CaptureService.EXTRA_START_TIME, 0);
                 int imagesCaptured = intent.getIntExtra(CaptureService.EXTRA_IMAGES_CAPTURED, 0);
                 int imagesRemaining = intent.getIntExtra(CaptureService.EXTRA_IMAGES_REMAINING, 0);
 
@@ -39,9 +41,37 @@ public class MainActivity extends ActionBarActivity {
 
                 // A capture is said to be in progress if the start time is nonzero
                 if (startTime != 0) {
-                    //...
+
+                    // The button stops the capture when clicked
+                    buttonStartStop.setText(R.string.button_stop);
+                    buttonStartStop.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            sendAction(CaptureService.ACTION_STOP_CAPTURE);
+                        }
+                    });
+
+                    textStartTime.setText(DateUtils.formatDateTime(MainActivity.this, startTime,
+                            DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_TIME));
+                    textImagesCaptured.setText(String.valueOf(imagesCaptured));
+
+                    // If imagesRemaining is set to 0, there is no limit
+                    if (imagesRemaining == 0) {
+                        textImagesRemaining.setText(R.string.text_na);
+                    } else {
+                        textImagesRemaining.setText(String.valueOf(imagesRemaining));
+                    }
+
                 } else {
+
                     buttonStartStop.setText(R.string.button_start);
+                    buttonStartStop.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            sendAction(CaptureService.ACTION_START_CAPTURE);
+                        }
+                    });
+
                     textStartTime.setText(R.string.text_na);
                     textImagesCaptured.setText(R.string.text_na);
                     textImagesRemaining.setText(R.string.text_na);
@@ -51,9 +81,7 @@ public class MainActivity extends ActionBarActivity {
         }, new IntentFilter(CaptureService.BROADCAST_INFO));
 
         // Get the capture service to broadcast the current status
-        Intent intent = new Intent(this, CaptureService.class);
-        intent.setAction(CaptureService.ACTION_GET_INFO);
-        startService(intent);
+        sendAction(CaptureService.ACTION_GET_INFO);
     }
 
     @Override
@@ -72,5 +100,14 @@ public class MainActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Utility method to send an action to the service
+     */
+    private void sendAction(String action) {
+        Intent intent = new Intent(this, CaptureService.class);
+        intent.setAction(action);
+        startService(intent);
     }
 }
