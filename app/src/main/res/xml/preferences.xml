@@ -9,7 +9,7 @@
             android:title="@string/pref_interval"
             android:entries="@array/pref_interval_titles"
             android:entryValues="@array/pref_interval_values"
-            android:defaultValue="5" />
+            android:defaultValue="5000" />
 
         <ListPreference
             android:key="limit"

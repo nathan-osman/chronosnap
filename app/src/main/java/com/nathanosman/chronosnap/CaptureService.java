@@ -6,9 +6,12 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 
 public class CaptureService extends Service {
@@ -35,6 +38,8 @@ public class CaptureService extends Service {
     private int mLimit;
 
     private AlarmManager mAlarmManager;
+    private SharedPreferences mPreferences;
+
     private PendingIntent mCaptureIntent;
 
     @Override
@@ -43,6 +48,10 @@ public class CaptureService extends Service {
         mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         mCaptureIntent = PendingIntent.getService(this, 0,
                 new Intent(this, CaptureService.class).setAction(ACTION_CAPTURE), 0);
+
+        // Ensure that default preferences have been set
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     }
 
     @Override
@@ -52,13 +61,13 @@ public class CaptureService extends Service {
         if (intent != null) {
             final String action = intent.getAction();
             if (ACTION_START_CAPTURE.equals(action)) {
-                handleStartCapture();
+                startCapture();
             } else if (ACTION_STOP_CAPTURE.equals(action)) {
-                handleStopCapture();
+                stopCapture();
             } else if (ACTION_GET_INFO.equals(action)) {
                 broadcastInfo();
             } else if (ACTION_CAPTURE.equals(action)) {
-                handleCapture();
+                capture();
             }
         }
 
@@ -71,7 +80,7 @@ public class CaptureService extends Service {
     }
 
     @SuppressWarnings("deprecation")
-    private void handleStartCapture() {
+    private void startCapture() {
 
         // Make this a foreground service, which helps keep it from being killed
         Intent intent = new Intent(this, MainActivity.class);
@@ -91,17 +100,18 @@ public class CaptureService extends Service {
         mStartTime = System.currentTimeMillis();
         mIndex = 0;
 
-        // TODO: load the interval and limit from preferences
-        mInterval = 5000;
-        mLimit = 0;
+        // Load the interval and limit from preferences
+        mInterval = Long.parseLong(mPreferences.getString("interval", ""));
+        mLimit = Integer.parseInt(mPreferences.getString("limit", ""));
 
         broadcastInfo();
 
         // Set an alarm to capture the first image
+        Log.d(CaptureService.class.getName(), "Capture has started.");
         setAlarm();
     }
 
-    private void handleStopCapture() {
+    private void stopCapture() {
 
         // This is no longer a foreground service
         mAlarmManager.cancel(mCaptureIntent);
@@ -112,6 +122,7 @@ public class CaptureService extends Service {
         broadcastInfo();
 
         // Stop the service since we don't need it running anymore
+        Log.d(CaptureService.class.getName(), "Capture has stopped.");
         stopSelf();
     }
 
@@ -141,13 +152,21 @@ public class CaptureService extends Service {
         }
     }
 
-    private void handleCapture() {
+    private void capture() {
+
+        Log.d(CaptureService.class.getName(), "Capturing image #" + String.valueOf(mIndex + 1) + ".");
 
         mIndex++;
 
         broadcastInfo();
 
-        // Set an alarm to capture the next image
-        setAlarm();
+        // If a limit was supplied, check to make sure we have not gone beyond it
+        if(mLimit != 0) {
+            if(mIndex < mLimit) {
+                setAlarm();
+            } else {
+                stopCapture();
+            }
+        }
     }
 }
