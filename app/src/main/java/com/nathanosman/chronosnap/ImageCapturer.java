@@ -115,7 +115,7 @@ public class ImageCapturer {
                     // Move to the setup step
                     setup();
                 }
-            };
+            }.execute();
         }
     }
 

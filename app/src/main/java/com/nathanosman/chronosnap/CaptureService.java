@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
@@ -129,6 +130,9 @@ public class CaptureService extends Service {
         return null;
     }
 
+    /**
+     * Send a broadcast with current status
+     */
     private void broadcastStatus() {
 
         Intent intent = new Intent(BROADCAST_STATUS);
@@ -143,6 +147,8 @@ public class CaptureService extends Service {
      */
     @SuppressWarnings("deprecation")
     private void startCapture() {
+
+        log("Starting image capture.");
 
         // Indicate that this is a foreground service by creating a persistent
         // notification displayed while the capture is in progress
@@ -162,7 +168,7 @@ public class CaptureService extends Service {
         for (int i = 0; i < Camera.getNumberOfCameras(); ++i) {
 
             Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-            Camera.getCameraInfo(0, cameraInfo);
+            Camera.getCameraInfo(i, cameraInfo);
 
             if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
                 cameraId = i;
@@ -172,7 +178,7 @@ public class CaptureService extends Service {
         // TODO: this should be a configurable setting
 
         // Generate a name for the sequence based on the current date and time
-        String sequenceName = new SimpleDateFormat("yyyymmdd_hhmmss").format(new Date(mStartTime));
+        String sequenceName = new SimpleDateFormat("yyyymmdd_hhmmss").format(new Date());
 
         // Set the start time and reset the index
         mImageCapturer = new ImageCapturer(cameraId, sequenceName);
@@ -196,6 +202,8 @@ public class CaptureService extends Service {
      */
     private void stopCapture() {
 
+        log("Stopping image capture.");
+
         // TODO: this currently cannot cancel an image capture in progress
 
         // Cancel any pending capture intents and leave the foreground
@@ -215,10 +223,14 @@ public class CaptureService extends Service {
      */
     private void capture() {
 
+        log("Capturing image #" + String.valueOf(mIndex) + ".");
+
         mImageCapturer.startCapture(mIndex, new ImageCapturer.CaptureCallback() {
 
             @Override
             public void onSuccess() {
+
+                log("Image #" + String.valueOf(mIndex) + " captured.");
 
                 // Increment the counter and broadcast the status
                 mIndex++;
@@ -240,6 +252,8 @@ public class CaptureService extends Service {
 
             @Override
             public void onError(String description) {
+
+                log("Error: " + description);
 
                 // Inform the user that an error has occurred during capture
                 Toast.makeText(CaptureService.this, R.string.toast_error_storage_img,
@@ -265,5 +279,12 @@ public class CaptureService extends Service {
         } else {
             mAlarmManager.set(AlarmManager.RTC_WAKEUP, triggerAtMillis, mCaptureIntent);
         }
+    }
+
+    /**
+     * Log the specified message
+     */
+    private void log(String message) {
+        Log.d(CaptureService.class.getSimpleName(), message);
     }
 }
