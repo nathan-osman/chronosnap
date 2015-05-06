@@ -7,151 +7,131 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
-import android.media.MediaScannerConnection;
 import android.os.Build;
-import android.os.Environment;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 
+/**
+ * Captures images at the predefined interval
+ *
+ * Capture parameters are initialized at the beginning of the capture.
+ */
 public class CaptureService extends Service {
 
-    public static final String ACTION_START_CAPTURE = "com.nathanosman.chronosnap.action.START_CAPTURE";
-    public static final String ACTION_STOP_CAPTURE = "com.nathanosman.chronoshap.action.STOP_CAPTURE";
-    public static final String ACTION_GET_INFO = "com.nathanosman.chronosnap.action.GET_INFO";
+    /**
+     * Broadcast the current status of the capture
+     */
+    public static final String ACTION_BROADCAST_STATUS = "com.nathanosman.chronosnap.action.BROADCAST_STATUS";
 
-    // This action is only sent by the alarm
+    /**
+     * Start capturing a sequence
+     */
+    public static final String ACTION_START_CAPTURE = "com.nathanosman.chronosnap.action.START_CAPTURE";
+
+    /**
+     * Explicitly stop capturing a sequence
+     */
+    public static final String ACTION_STOP_CAPTURE = "com.nathanosman.chronoshap.action.STOP_CAPTURE";
+
+    /**
+     * Capture the next image in the sequence
+     * <p/>
+     * This action is triggered by an alarm set to the appropriate interval
+     * and therefore can only be sent from within the service.
+     */
     private static final String ACTION_CAPTURE = "com.nathanosman.chronosnap.action.CAPTURE";
 
-    public static final String BROADCAST_INFO = "com.nathanosman.chronosnap.broadcast.INFO";
+    /**
+     * Broadcast containing capture status
+     */
+    public static final String BROADCAST_STATUS = "com.nathanosman.chronosnap.broadcast.STATUS";
 
+    /**
+     * Start time of the capture
+     */
     public static final String EXTRA_START_TIME = "com.nathanosman.chronosnap.extra.START_TIME";
+
+    /**
+     * Number of images captured so far
+     */
     public static final String EXTRA_IMAGES_CAPTURED = "com.nathanosman.chronosnap.extra.IMAGES_CAPTURED";
+
+    /**
+     * Number of images remaining to be captured (0 if not limit)
+     */
     public static final String EXTRA_IMAGES_REMAINING = "com.nathanosman.chronosnap.extra.IMAGES_REMAINING";
 
-    public static final int NOTIFICATION_ID = 1;
+    // Alarm manager and intent for triggering a capture
+    private AlarmManager mAlarmManager;
+    private PendingIntent mCaptureIntent;
 
-    // All of these values are initialized by ACTION_START_CAPTURE
+    // Data initialized when the capture begins
+    private ImageCapturer mImageCapturer;
     private long mStartTime;
     private long mInterval;
     private int mIndex;
     private int mLimit;
 
-    private AlarmManager mAlarmManager;
-    private PendingIntent mCaptureIntent;
-
-    private SharedPreferences mPreferences;
-    private File mStorageDirectory;
-
+    /**
+     * Reimplementation of Service.onCreate()
+     */
     @Override
     public void onCreate() {
 
         mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         mCaptureIntent = PendingIntent.getService(this, 0,
                 new Intent(this, CaptureService.class).setAction(ACTION_CAPTURE), 0);
-
-        // Ensure that default preferences have been set
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-        mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-
-        // Determine the location of the storage directory
-        mStorageDirectory = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DCIM), "ChronoSnap");
     }
 
+    /**
+     * Reimplementation of Service.onStartCommand()
+     */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        // Process the command
+        // TODO: figure out why the intent is sometimes NULL
+
         if (intent != null) {
+
+            // Dispatch the command to the appropriate method
             final String action = intent.getAction();
-            if (ACTION_START_CAPTURE.equals(action)) {
-                startCapture();
-            } else if (ACTION_STOP_CAPTURE.equals(action)) {
-                stopCapture();
-            } else if (ACTION_GET_INFO.equals(action)) {
-                broadcastInfo();
-            } else if (ACTION_CAPTURE.equals(action)) {
-                capture();
+            switch (action) {
+                case ACTION_BROADCAST_STATUS:
+                    broadcastStatus();
+                    break;
+                case ACTION_START_CAPTURE:
+                    startCapture();
+                    break;
+                case ACTION_STOP_CAPTURE:
+                    stopCapture();
+                    break;
+                case ACTION_CAPTURE:
+                    capture();
+                    break;
             }
         }
 
         return START_STICKY;
     }
 
+    /**
+     * Not implemented
+     */
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
 
-    @SuppressWarnings("deprecation")
-    private void startCapture() {
+    private void broadcastStatus() {
 
-        // If it cannot be created, then fire off a toast to let the user know
-        if (! mStorageDirectory.exists()) {
-            if(! mStorageDirectory.mkdirs()) {
-
-                Toast.makeText(this, R.string.toast_error_storage_dir, Toast.LENGTH_SHORT).show();
-                return;
-            }
-        }
-
-        // Make this a foreground service, which helps keep it from being killed
-        Intent intent = new Intent(this, MainActivity.class);
-        Notification notification = new Notification.Builder(this)
-                .setContentTitle(getText(R.string.notification_title))
-                .setContentText(getText(R.string.notification_text))
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentIntent(PendingIntent.getActivity(this, 0, intent, 0))
-                .getNotification();
-        startForeground(NOTIFICATION_ID, notification);
-
-        mStartTime = System.currentTimeMillis();
-        mIndex = 0;
-
-        // Load the interval and limit from preferences
-        mInterval = Long.parseLong(mPreferences.getString("interval", ""));
-        mLimit = Integer.parseInt(mPreferences.getString("limit", ""));
-
-        broadcastInfo();
-
-        // Set an alarm to capture the first image
-        Log.d(CaptureService.class.getName(), "Capture has started.");
-        setAlarm();
-    }
-
-    private void stopCapture() {
-
-        // This is no longer a foreground service
-        mAlarmManager.cancel(mCaptureIntent);
-        stopForeground(true);
-
-        mStartTime = 0;
-        broadcastInfo();
-
-        // Stop the service since we don't need it running anymore
-        Log.d(CaptureService.class.getName(), "Capture has stopped.");
-        stopSelf();
-    }
-
-    /**
-     * Send a local intent providing current status information
-     */
-    private void broadcastInfo() {
-
-        Intent intent = new Intent(BROADCAST_INFO);
+        Intent intent = new Intent(BROADCAST_STATUS);
         intent.putExtra(EXTRA_START_TIME, mStartTime);
         intent.putExtra(EXTRA_IMAGES_CAPTURED, mIndex);
         intent.putExtra(EXTRA_IMAGES_REMAINING, mLimit == 0 ? 0 : mLimit - mIndex);
@@ -159,86 +139,131 @@ public class CaptureService extends Service {
     }
 
     /**
+     * Start capturing a sequence of images
+     */
+    @SuppressWarnings("deprecation")
+    private void startCapture() {
+
+        // Indicate that this is a foreground service by creating a persistent
+        // notification displayed while the capture is in progress
+        Intent intent = new Intent(this, MainActivity.class);
+        Notification notification = new Notification.Builder(this)
+                .setContentTitle(getText(R.string.notification_title))
+                .setContentText(getText(R.string.notification_text))
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentIntent(PendingIntent.getActivity(this, 0, intent, 0))
+                .getNotification();
+        startForeground(1, notification);
+
+        // TODO: this should be a configurable setting
+
+        // Find the back camera (if available) or use the first one
+        int cameraId = 0;
+        for (int i = 0; i < Camera.getNumberOfCameras(); ++i) {
+
+            Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+            Camera.getCameraInfo(0, cameraInfo);
+
+            if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
+                cameraId = i;
+            }
+        }
+
+        // TODO: this should be a configurable setting
+
+        // Generate a name for the sequence based on the current date and time
+        String sequenceName = new SimpleDateFormat("yyyymmdd_hhmmss").format(new Date(mStartTime));
+
+        // Set the start time and reset the index
+        mImageCapturer = new ImageCapturer(cameraId, sequenceName);
+        mStartTime = System.currentTimeMillis();
+        mIndex = 0;
+
+        // Load the interval and limit from preferences
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        mInterval = Long.parseLong(sharedPreferences.getString("interval", ""));
+        mLimit = Integer.parseInt(sharedPreferences.getString("limit", ""));
+
+        // Broadcast the new status (that the capture has started) and set an alarm
+        broadcastStatus();
+        setAlarm();
+    }
+
+    /**
+     * Stop capturing a sequence of images
+     */
+    private void stopCapture() {
+
+        // TODO: this currently cannot cancel an image capture in progress
+
+        // Cancel any pending capture intents and leave the foreground
+        mAlarmManager.cancel(mCaptureIntent);
+        stopForeground(true);
+
+        // Reset the start time (to indicate no transfer) and broadcast this status
+        mStartTime = 0;
+        broadcastStatus();
+
+        // Stop the service
+        stopSelf();
+    }
+
+    /**
+     * Capture a single image
+     */
+    private void capture() {
+
+        mImageCapturer.startCapture(mIndex, new ImageCapturer.CaptureCallback() {
+
+            @Override
+            public void onSuccess() {
+
+                // Increment the counter and broadcast the status
+                mIndex++;
+                broadcastStatus();
+
+                // Check to see if more images should be captured (and set the alarm)
+                // or if the limit was reached (and the capture may be stopped
+                if (mLimit == 0 || mIndex < mLimit) {
+
+                    // TODO: this should be a configurable setting
+                    mImageCapturer.close();
+
+                    setAlarm();
+
+                } else {
+                    stopCapture();
+                }
+            }
+
+            @Override
+            public void onError(String description) {
+
+                // Inform the user that an error has occurred during capture
+                Toast.makeText(CaptureService.this, R.string.toast_error_storage_img,
+                        Toast.LENGTH_LONG).show();
+
+                // Stop the capture
+                stopCapture();
+            }
+        });
+    }
+
+    /**
      * Set the alarm for the next capture
-     * KitKat requires a separate method to be called in order to ensure timely delivery
      */
     private void setAlarm() {
 
         long triggerAtMillis = System.currentTimeMillis() + mInterval;
+
+        // For KitKat and newer devices, we need to use setExact or we don't
+        // end up with the same level of precision as earlier versions
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             mAlarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, mCaptureIntent);
         } else {
             mAlarmManager.set(AlarmManager.RTC_WAKEUP, triggerAtMillis, mCaptureIntent);
         }
-    }
-
-    /**
-     * Capture an image
-     */
-    @SuppressWarnings("deprecation")
-    private void capture() {
-
-        Log.d(CaptureService.class.getName(), "Beginning capture of image #" + String.valueOf(mIndex + 1) + ".");
-
-        // Open and setup the camera
-        Camera camera = Camera.open();
-
-        try {
-
-            camera.setPreviewTexture(new SurfaceTexture(0));
-
-        } catch(IOException e) {
-
-            // Something went wrong with the preview, inform the user and halt
-            Toast.makeText(this, R.string.toast_error_camera, Toast.LENGTH_SHORT).show();
-            stopCapture();
-            return;
-        }
-
-        // Start the preview and capture the image
-        camera.startPreview();
-        camera.takePicture(null, null, new Camera.PictureCallback() {
-            @Override
-            public void onPictureTaken(byte[] data, Camera camera) {
-
-                Log.d(CaptureService.class.getName(), "Capture complete! Storing image #" + String.valueOf(mIndex + 1) + ".");
-
-                // Immediately release the camera as we are done with it
-                camera.release();
-
-                // Build the correct filename and open the output file
-                String prefix = new SimpleDateFormat("yyyymmdd_hhmmss").format(new Date(mStartTime));
-                File outputFile = new File(mStorageDirectory, prefix + "_" + String.valueOf(mIndex) + ".jpg");
-
-                // Write the data to the file
-                try {
-
-                    OutputStream os = new FileOutputStream(outputFile);
-                    os.write(data);
-                    os.close();
-
-                } catch(IOException e) {
-
-                    // Something went wrong storing the preview
-                    Toast.makeText(CaptureService.this, R.string.toast_error_storage_img, Toast.LENGTH_SHORT).show();
-                    stopCapture();
-                    return;
-                }
-
-                // Pass the file along to the media scanner
-                MediaScannerConnection.scanFile(CaptureService.this,
-                        new String[] { outputFile.getAbsolutePath() }, null, null);
-
-                mIndex++;
-                broadcastInfo();
-
-                // If a limit was supplied, check to make sure we have not gone beyond it
-                if (mLimit == 0 || mIndex < mLimit) {
-                    setAlarm();
-                } else {
-                    stopCapture();
-                }
-            }
-        });
     }
 }

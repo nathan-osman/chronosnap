@@ -78,10 +78,10 @@ public class MainActivity extends ActionBarActivity {
                 }
 
             }
-        }, new IntentFilter(CaptureService.BROADCAST_INFO));
+        }, new IntentFilter(CaptureService.BROADCAST_STATUS));
 
         // Get the capture service to broadcast the current status
-        sendAction(CaptureService.ACTION_GET_INFO);
+        sendAction(CaptureService.ACTION_BROADCAST_STATUS);
     }
 
     @Override
