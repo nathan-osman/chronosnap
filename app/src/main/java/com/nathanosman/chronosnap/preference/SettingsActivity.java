@@ -28,7 +28,7 @@ public class SettingsActivity extends PreferenceActivity {
             bindPreferenceSummaryToValue(findPreference("interval"));
             bindPreferenceSummaryToValue(findPreference("limit"));
             bindPreferenceSummaryToValue(findPreference("camera"));
-            bindPreferenceSummaryToValue(findPreference("focus"));
+            //bindPreferenceSummaryToValue(findPreference("focus"));
         }
 
         private static Preference.OnPreferenceChangeListener sListener = new Preference.OnPreferenceChangeListener() {

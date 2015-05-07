@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.nathanosman.chronosnap.preference.SettingsActivity;
+import com.nathanosman.chronosnap.service.CaptureService;
 
 
 public class MainActivity extends ActionBarActivity {

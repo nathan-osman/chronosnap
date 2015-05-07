@@ -1,4 +1,4 @@
-package com.nathanosman.chronosnap;
+package com.nathanosman.chronosnap.service;
 
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;

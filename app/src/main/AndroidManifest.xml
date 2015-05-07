@@ -22,7 +22,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".SettingsActivity"
+            android:name=".preference.SettingsActivity"
             android:label="@string/title_activity_settings"
             android:parentActivityName=".MainActivity" >
             <meta-data
@@ -31,7 +31,7 @@
         </activity>
 
         <service
-            android:name=".CaptureService"
+            android:name=".service.CaptureService"
             android:exported="false" >
         </service>
     </application>

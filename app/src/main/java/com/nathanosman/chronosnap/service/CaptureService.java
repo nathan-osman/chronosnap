@@ -1,4 +1,4 @@
-package com.nathanosman.chronosnap;
+package com.nathanosman.chronosnap.service;
 
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -7,13 +7,15 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.hardware.Camera;
 import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.nathanosman.chronosnap.MainActivity;
+import com.nathanosman.chronosnap.R;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
