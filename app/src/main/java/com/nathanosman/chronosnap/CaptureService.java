@@ -156,7 +156,7 @@ public class CaptureService extends Service {
         Notification notification = new Notification.Builder(this)
                 .setContentTitle(getText(R.string.notification_title))
                 .setContentText(getText(R.string.notification_text))
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_stat_notify)
                 .setContentIntent(PendingIntent.getActivity(this, 0, intent, 0))
                 .getNotification();
         startForeground(1, notification);
