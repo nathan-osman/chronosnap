@@ -14,8 +14,8 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.nathanosman.chronosnap.MainActivity;
 import com.nathanosman.chronosnap.R;
+import com.nathanosman.chronosnap.ui.MainActivity;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

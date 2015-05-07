@@ -1,4 +1,4 @@
-package com.nathanosman.chronosnap;
+package com.nathanosman.chronosnap.ui;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.nathanosman.chronosnap.R;
 import com.nathanosman.chronosnap.preference.SettingsActivity;
 import com.nathanosman.chronosnap.service.CaptureService;
 
