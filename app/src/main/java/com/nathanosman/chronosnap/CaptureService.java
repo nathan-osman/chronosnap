@@ -74,11 +74,13 @@ public class CaptureService extends Service {
     private PendingIntent mCaptureIntent;
 
     // Data initialized when the capture begins
-    private ImageCapturer mImageCapturer;
     private long mStartTime;
     private long mInterval;
     private int mIndex;
     private int mLimit;
+
+    // Used for capturing the images
+    private ImageCapturer mImageCapturer;
 
     /**
      * Reimplementation of Service.onCreate()
@@ -161,36 +163,28 @@ public class CaptureService extends Service {
                 .getNotification();
         startForeground(1, notification);
 
-        // TODO: this should be a configurable setting
-
-        // Find the back camera (if available) or use the first one
-        int cameraId = 0;
-        for (int i = 0; i < Camera.getNumberOfCameras(); ++i) {
-
-            Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-            Camera.getCameraInfo(i, cameraInfo);
-
-            if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
-                cameraId = i;
-            }
-        }
-
-        // TODO: this should be a configurable setting
-
-        // Generate a name for the sequence based on the current date and time
-        String sequenceName = new SimpleDateFormat("yyyymmdd_hhmmss").format(new Date());
-
         // Set the start time and reset the index
-        mImageCapturer = new ImageCapturer(cameraId, sequenceName);
         mStartTime = System.currentTimeMillis();
         mIndex = 0;
 
-        // Load the interval and limit from preferences
+        // Load the current settings
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         mInterval = Long.parseLong(sharedPreferences.getString("interval", ""));
         mLimit = Integer.parseInt(sharedPreferences.getString("limit", ""));
+
+        // TODO: load focus setting
+
+        // Generate a name for the sequence based on the current date and time
+        int cameraId = Integer.parseInt(sharedPreferences.getString("camera", ""));
+
+        // TODO: user should be able to select the sequence name
+
+        String sequenceName = new SimpleDateFormat("yyyymmdd_hhmmss").format(new Date());
+
+        // Initialize the capturer
+        mImageCapturer = new ImageCapturer(cameraId, sequenceName);
 
         // Broadcast the new status (that the capture has started) and set an alarm
         broadcastStatus();
