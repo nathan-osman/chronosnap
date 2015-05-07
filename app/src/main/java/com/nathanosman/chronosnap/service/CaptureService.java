@@ -176,17 +176,16 @@ public class CaptureService extends Service {
         mInterval = Long.parseLong(sharedPreferences.getString("interval", ""));
         mLimit = Integer.parseInt(sharedPreferences.getString("limit", ""));
 
-        // TODO: load focus setting
-
         // Generate a name for the sequence based on the current date and time
         int cameraId = Integer.parseInt(sharedPreferences.getString("camera", ""));
+        boolean autofocus = sharedPreferences.getString("focus", "").equals("auto");
 
         // TODO: user should be able to select the sequence name
 
         String sequenceName = new SimpleDateFormat("yyyymmdd_hhmmss").format(new Date());
 
         // Initialize the capturer
-        mImageCapturer = new ImageCapturer(cameraId, sequenceName);
+        mImageCapturer = new ImageCapturer(cameraId, autofocus, sequenceName);
 
         // Broadcast the new status (that the capture has started) and set an alarm
         broadcastStatus();

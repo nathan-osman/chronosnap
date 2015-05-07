@@ -27,14 +27,12 @@
             android:key="camera"
             android:title="@string/pref_camera" />
 
-        <!-- TODO
         <ListPreference
             android:key="focus"
             android:title="@string/pref_focus"
             android:entries="@array/pref_focus_titles"
             android:entryValues="@array/pref_focus_values"
             android:defaultValue="auto" />
-        -->
 
     </PreferenceCategory>
 

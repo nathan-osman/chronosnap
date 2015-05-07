@@ -42,6 +42,7 @@ public class ImageCapturer {
 
     // Data initialized in the constructor
     private int mCameraId;
+    private boolean mAutofocus;
     private File mSequencePath;
 
     // Data initialized by startCapture()
@@ -55,11 +56,13 @@ public class ImageCapturer {
     /**
      * Initialize the capturer
      * @param cameraId ID of the camera to use for capturing
+     * @param autofocus true to force the camera to focus before capture
      * @param sequenceName user-supplied name for the sequence
      */
-    public ImageCapturer(int cameraId, String sequenceName) {
+    public ImageCapturer(int cameraId, boolean autofocus, String sequenceName) {
 
         mCameraId = cameraId;
+        mAutofocus = autofocus;
         mSequencePath = new File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
                 "ChronoSnap" + File.separator + sequenceName
@@ -140,24 +143,34 @@ public class ImageCapturer {
 
         // The preview needs to be started after each capture
         mCamera.startPreview();
-        mCamera.autoFocus(new Camera.AutoFocusCallback() {
 
-            @Override
-            public void onAutoFocus(boolean success, Camera camera) {
+        if (mAutofocus) {
 
-                // TODO: if unable to focus, try again a couple of times
-                // TODO: error message needs to be localized
+            // If autofocus is requested, it needs to be completed before the capture
+            mCamera.autoFocus(new Camera.AutoFocusCallback() {
 
-                // If setup was not successful, we need to report an error
-                if (!success) {
-                    mCaptureCallback.onError("Unable to focus.");
-                    return;
+                @Override
+                public void onAutoFocus(boolean success, Camera camera) {
+
+                    // TODO: if unable to focus, try again a couple of times
+                    // TODO: error message needs to be localized
+
+                    // If setup was not successful, we need to report an error
+                    if (!success) {
+                        mCaptureCallback.onError("Unable to focus.");
+                        return;
+                    }
+
+                    // Move to the capture step
+                    capture();
                 }
+            });
 
-                // Move to the capture step
-                capture();
-            }
-        });
+        } else {
+
+            // Skip to the capture step
+            capture();
+        }
     }
 
     /**
