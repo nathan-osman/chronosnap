@@ -38,7 +38,7 @@
     <string name="text_images_remaining">Images Remaining:</string>
 
     <!-- Preferences -->
-    <string name="pref_category_general">General</string>
+    <string name="pref_category_timing">Timing</string>
 
     <string name="pref_interval">Interval</string>
     <string-array name="pref_interval_titles">
@@ -70,6 +70,22 @@
         <item>20</item>
         <item>50</item>
         <item>100</item>
+    </string-array>
+
+    <string name="pref_category_camera">Camera</string>
+
+    <string name="pref_camera">Camera</string>
+    <string name="pref_camera_front">Front</string>
+    <string name="pref_camera_back">Back</string>
+
+    <string name="pref_focus">Focus</string>
+    <string-array name="pref_focus_titles">
+        <item>None</item>
+        <item>Auto</item>
+    </string-array>
+    <string-array name="pref_focus_values">
+        <item>none</item>
+        <item>auto</item>
     </string-array>
 
 </resources>

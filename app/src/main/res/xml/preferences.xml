@@ -2,7 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
-        android:title="@string/pref_category_general">
+        android:title="@string/pref_category_timing">
 
         <ListPreference
             android:key="interval"
@@ -17,6 +17,22 @@
             android:entries="@array/pref_limit_titles"
             android:entryValues="@array/pref_limit_values"
             android:defaultValue="0" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/pref_category_camera">
+
+        <com.nathanosman.chronosnap.preference.CameraPreference
+            android:key="camera"
+            android:title="@string/pref_camera" />
+
+        <ListPreference
+            android:key="focus"
+            android:title="@string/pref_focus"
+            android:entries="@array/pref_focus_titles"
+            android:entryValues="@array/pref_focus_values"
+            android:defaultValue="auto" />
 
     </PreferenceCategory>
 
