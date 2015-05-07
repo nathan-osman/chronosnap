@@ -1,4 +1,4 @@
-package com.nathanosman.chronosnap;
+package com.nathanosman.chronosnap.preference;
 
 import android.os.Bundle;
 import android.preference.ListPreference;
@@ -6,6 +6,8 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+
+import com.nathanosman.chronosnap.R;
 
 
 /**

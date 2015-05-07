@@ -14,6 +14,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.nathanosman.chronosnap.preference.SettingsActivity;
+
 
 public class MainActivity extends ActionBarActivity {
 
