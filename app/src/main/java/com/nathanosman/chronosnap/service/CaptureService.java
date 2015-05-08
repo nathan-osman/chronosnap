@@ -159,6 +159,11 @@ public class CaptureService extends Service {
      */
     private void startCapture() {
 
+        // Prevent a new capture from being started if one is in progress
+        if (mStartTime != 0) {
+            return;
+        }
+
         // TODO: this method needs heavy refactoring
 
         log("Starting image capture.");
