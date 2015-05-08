@@ -15,7 +15,8 @@ import java.util.List;
  * Custom preference type for selecting a camera
  *
  * Since the number and type of hardware cameras can differ from one model to
- * the next, the user needs to be able to select which one to use.
+ * the next, the user needs to be able to select which one to use. Subclassing
+ * ListPreference allows us to pick the default value at runtime.
  */
 public class CameraPreference extends ListPreference {
 

@@ -22,22 +22,19 @@ public class ImageCapturer {
     /**
      * Callback interface used to provide notification of capture state
      *
-     * Both of the callbacks may leave the camera open (to save time when
-     * starting the next capture), so it needs to be explicitly closed when
-     * capturing is finished.
+     * Note that the camera may still be open at this point and .close()
+     * should be called.
      */
     public interface CaptureCallback {
 
         /**
-         * Called when a capture completes successfully
+         * Called when a capture completes
+         * @param errorMessage descriptive message if an error occurred or null
+         *
+         * errorMessage will be null if no error has occurred. Otherwise it
+         * contains a human-readable description of the error.
          */
-        void onSuccess();
-
-        /**
-         * Called when an error condition occurs
-         * @param description human-readable description of the error condition
-         */
-        void onError(String description);
+        void onComplete(String errorMessage);
     }
 
     // Data initialized in the constructor
@@ -49,7 +46,8 @@ public class ImageCapturer {
     private int mIndex;
     private CaptureCallback mCaptureCallback;
 
-    // (Potentially) persistent connection to the camera
+    // Connection to the camera (may be maintained for multiple captures)
+    // Because this app works on 4.0.4+, we can't easily use the Camera2 API
     @SuppressWarnings("deprecation")
     private Camera mCamera;
 
@@ -108,15 +106,13 @@ public class ImageCapturer {
                 @Override
                 protected void onPostExecute(String message) {
 
-                    // If message is non-null, then call CaptureCallback.onError(),
+                    // If message is non-null, then pass along the error message,
                     // otherwise start the camera preview and begin autofocus
                     if (message != null) {
-                        mCaptureCallback.onError(message);
-                        return;
+                        mCaptureCallback.onComplete(message);
+                    } else {
+                        setup();
                     }
-
-                    // Move to the setup step
-                    setup();
                 }
             }.execute();
         }
@@ -137,6 +133,8 @@ public class ImageCapturer {
 
     /**
      * Setup the camera in preparation for image capture
+     *
+     * Currently, this step is limited to autofocus.
      */
     @SuppressWarnings("deprecation")
     private void setup() {
@@ -152,17 +150,14 @@ public class ImageCapturer {
                 @Override
                 public void onAutoFocus(boolean success, Camera camera) {
 
-                    // TODO: if unable to focus, try again a couple of times
                     // TODO: error message needs to be localized
 
-                    // If setup was not successful, we need to report an error
+                    // If the camera was unable to focus, report the error
                     if (!success) {
-                        mCaptureCallback.onError("Unable to focus.");
-                        return;
+                        mCaptureCallback.onComplete("Unable to focus.");
+                    } else {
+                        capture();
                     }
-
-                    // Move to the capture step
-                    capture();
                 }
             });
 
@@ -191,7 +186,7 @@ public class ImageCapturer {
 
                     // Report an error if the directory could not be created
                     if (!mSequencePath.mkdirs()) {
-                        mCaptureCallback.onError("Unable to create storage directory.");
+                        mCaptureCallback.onComplete("Unable to create storage directory.");
                         return;
                     }
                 }
@@ -208,12 +203,12 @@ public class ImageCapturer {
 
                 } catch (IOException e) {
 
-                    mCaptureCallback.onError(e.getMessage());
+                    mCaptureCallback.onComplete(e.getMessage());
                     return;
                 }
 
                 // Indicate that the capture was successful
-                mCaptureCallback.onSuccess();
+                mCaptureCallback.onComplete(null);
             }
         });
     }

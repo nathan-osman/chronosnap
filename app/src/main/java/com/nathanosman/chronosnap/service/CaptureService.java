@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -84,6 +85,10 @@ public class CaptureService extends Service {
     // Used for capturing the images
     private ImageCapturer mImageCapturer;
 
+    // Used for tracking stop requests
+    private boolean mCaptureInProgress = false;
+    private boolean mPendingShutdown = false;
+
     /**
      * Reimplementation of Service.onCreate()
      */
@@ -100,8 +105,6 @@ public class CaptureService extends Service {
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
-        // TODO: figure out why the intent is sometimes NULL
 
         if (intent != null) {
 
@@ -135,7 +138,10 @@ public class CaptureService extends Service {
     }
 
     /**
-     * Send a broadcast with current status
+     * Send a broadcast with the current capture status
+     *
+     * Status currently includes the start time, current index, and remaining
+     * image count (0 if no limit).
      */
     private void broadcastStatus() {
 
@@ -143,27 +149,21 @@ public class CaptureService extends Service {
         intent.putExtra(EXTRA_START_TIME, mStartTime);
         intent.putExtra(EXTRA_IMAGES_CAPTURED, mIndex);
         intent.putExtra(EXTRA_IMAGES_REMAINING, mLimit == 0 ? 0 : mLimit - mIndex);
+
+        // Send the broadcast
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     /**
      * Start capturing a sequence of images
      */
-    @SuppressWarnings("deprecation")
     private void startCapture() {
+
+        // TODO: this method needs heavy refactoring
 
         log("Starting image capture.");
 
-        // Indicate that this is a foreground service by creating a persistent
-        // notification displayed while the capture is in progress
-        Intent intent = new Intent(this, MainActivity.class);
-        Notification notification = new Notification.Builder(this)
-                .setContentTitle(getText(R.string.notification_title))
-                .setContentText(getText(R.string.notification_text))
-                .setSmallIcon(R.drawable.ic_stat_notify)
-                .setContentIntent(PendingIntent.getActivity(this, 0, intent, 0))
-                .getNotification();
-        startForeground(1, notification);
+        createNotification();
 
         // Set the start time and reset the index
         mStartTime = System.currentTimeMillis();
@@ -189,83 +189,145 @@ public class CaptureService extends Service {
 
         // Broadcast the new status (that the capture has started) and set an alarm
         broadcastStatus();
-        setAlarm();
+        setAlarm(System.currentTimeMillis() + mInterval);
     }
 
     /**
      * Stop capturing a sequence of images
+     *
+     * This may not actually stop the capture immediately since it is
+     * currently not possible to interrupt an individual image capture in
+     * progress.
      */
     private void stopCapture() {
 
         log("Stopping image capture.");
 
-        // TODO: this currently cannot cancel an image capture in progress
+        // If a capture is in progress, set a flag to shutdown after the
+        // capture completes - otherwise, immediately shut down
+        if (mCaptureInProgress) {
+            mPendingShutdown = true;
+        } else {
 
-        // Cancel any pending capture intents and leave the foreground
-        mAlarmManager.cancel(mCaptureIntent);
-        stopForeground(true);
-
-        // Reset the start time (to indicate no transfer) and broadcast this status
-        mStartTime = 0;
-        broadcastStatus();
-
-        // Stop the service
-        stopSelf();
+            // TODO: this doesn't do anything currently but will be needed later
+            mImageCapturer.close();
+            shutdown();
+        }
     }
 
     /**
      * Capture a single image
+     *
+     * The capture process is performed asynchronously and the results are
+     * provided through the two callbacks.
      */
     private void capture() {
 
         log("Capturing image #" + String.valueOf(mIndex) + ".");
 
+        // Grab the current time for calculating the next alarm interval later
+        final long captureTime = System.currentTimeMillis();
+
+        // Signal that the capture is in progress
+        mCaptureInProgress = true;
+
+        // Begin the capture
         mImageCapturer.startCapture(mIndex, new ImageCapturer.CaptureCallback() {
 
             @Override
-            public void onSuccess() {
+            public void onComplete(String errorMessage) {
 
-                log("Image #" + String.valueOf(mIndex) + " captured.");
+                // Log the status of the capture
+                if (errorMessage == null) {
+                    log("Image #" + String.valueOf(mIndex) + " captured.");
+                } else {
+                    log("Error: " + errorMessage);
+                }
 
-                // Increment the counter and broadcast the status
-                mIndex++;
-                broadcastStatus();
+                // Capture is no longer in progress
+                mCaptureInProgress = false;
 
-                // Check to see if more images should be captured (and set the alarm)
-                // or if the limit was reached (and the capture may be stopped
-                if (mLimit == 0 || mIndex < mLimit) {
+                // Shutdown the capture if one of the following occurred:
+                // - the capture was stopped (mPendingShutdown)
+                // - an error message was supplied
+                // - a limit was supplied and it has been reached
+                if (mPendingShutdown || errorMessage != null || mLimit != 0 && (mIndex + 1) == mLimit) {
 
-                    // TODO: this should be a configurable setting
+                    // Close the camera since it won't be needed anymore
                     mImageCapturer.close();
 
-                    setAlarm();
+                    // TODO: display an actual error notification instead of a toast
+
+                    // If an error occurred, then display a toast
+                    if (errorMessage != null) {
+                        Toast.makeText(CaptureService.this, errorMessage, Toast.LENGTH_LONG).show();
+                    }
+
+                    mPendingShutdown = false;
+                    shutdown();
 
                 } else {
-                    stopCapture();
+
+                    // Increment the counter and broadcast the status
+                    mIndex++;
+                    broadcastStatus();
+
+                    // TODO: check to see if closing the camera is necessary
+                    mImageCapturer.close();
+
+                    // Set an alarm for the next capture
+                    setAlarm(captureTime + mInterval);
                 }
-            }
-
-            @Override
-            public void onError(String description) {
-
-                log("Error: " + description);
-
-                // Inform the user that an error has occurred during capture
-                Toast.makeText(CaptureService.this, R.string.toast_error_storage_img,
-                        Toast.LENGTH_LONG).show();
-
-                // Stop the capture
-                stopCapture();
             }
         });
     }
 
     /**
-     * Set the alarm for the next capture
+     * Log the specified message
+     * @param message a descriptive status message
      */
-    private void setAlarm() {
+    private void log(String message) {
+        Log.d(CaptureService.class.getSimpleName(), message);
+    }
 
-        long triggerAtMillis = System.currentTimeMillis() + mInterval;
+    /**
+     * Create the persistent notification that will be displayed during capture
+     *
+     * The notification includes an action to immediately stop the capture.
+     */
+    private void createNotification() {
+
+        // Create a pending intent that will display the main UI
+        PendingIntent mainIntent = PendingIntent.getActivity(this, 0,
+                new Intent(this, MainActivity.class), 0);
+
+        // Create a pending intent that will stop the capture
+        PendingIntent stopIntent = PendingIntent.getService(this, 0,
+                new Intent(this, CaptureService.class).setAction(ACTION_STOP_CAPTURE), 0);
+
+        // TODO: "stop" is not localized
+
+        // Create the notification, noting that NotificationCompat will ignore
+        // any of the methods that aren't available on the current platform
+        Notification notification = new NotificationCompat.Builder(this)
+                .addAction(R.drawable.ic_action_stop, "Stop", stopIntent)
+                .setCategory(Notification.CATEGORY_SERVICE)
+                .setColor(getResources().getColor(R.color.material_primary))
+                .setContentIntent(mainIntent)
+                .setContentText(getText(R.string.notification_text))
+                .setContentTitle(getText(R.string.notification_title))
+                .setSmallIcon(R.drawable.ic_stat_notify)
+                .build();
+
+        // Build the notification and move the service into the foreground
+        startForeground(1, notification);
+    }
+
+    /**
+     * Set the alarm for the next capture
+     * @param triggerAtMillis time at which to capture the next image
+     */
+    private void setAlarm(long triggerAtMillis) {
 
         // For KitKat and newer devices, we need to use setExact or we don't
         // end up with the same level of precision as earlier versions
@@ -277,9 +339,25 @@ public class CaptureService extends Service {
     }
 
     /**
-     * Log the specified message
+     * Completely abort the capture
+     *
+     * All alarms are canceled, the service is pulled out of the foreground,
+     * variables are reset, and the status is broadcast one last time. This
+     * should never be called while a single image capture is in progress.
      */
-    private void log(String message) {
-        Log.d(CaptureService.class.getSimpleName(), message);
+    private void shutdown() {
+
+        log("Shutting down service.");
+
+        // Cancel any pending alarms and leave the foreground
+        mAlarmManager.cancel(mCaptureIntent);
+        stopForeground(true);
+
+        // Reset the start time and broadcast this status
+        mStartTime = 0;
+        broadcastStatus();
+
+        // Stop the service since there is no need to keep it running
+        stopSelf();
     }
 }
