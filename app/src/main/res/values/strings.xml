@@ -37,18 +37,30 @@
     <string name="text_images_captured">Images Captured:</string>
     <string name="text_images_remaining">Images Remaining:</string>
 
-    <!-- Preferences -->
-    <string name="pref_category_timing">Timing</string>
+    <!-- Preferences
 
-    <string name="pref_interval">Interval</string>
-    <string-array name="pref_interval_titles">
+    NOTE: to avoid typos and to ensure that default values only exist in a
+    single location, the keys, titles, and defaults are all managed as
+    strings.
+
+    TODO: exclude some of these from translation -->
+
+    <!-- Categories -->
+    <string name="pref_category_timing">Timing</string>
+    <string name="pref_category_camera">Camera</string>
+
+    <!-- Interval -->
+    <string name="pref_interval_key">interval</string>
+    <string name="pref_interval_title">Interval</string>
+    <string name="pref_interval_default">5000</string>
+    <string-array name="pref_interval_entries">
         <item>5 seconds</item>
         <item>10 seconds</item>
         <item>1 minute</item>
         <item>5 minutes</item>
         <item>10 minutes</item>
     </string-array>
-    <string-array name="pref_interval_values">
+    <string-array name="pref_interval_entry_values">
         <item>5000</item>
         <item>10000</item>
         <item>60000</item>
@@ -56,15 +68,18 @@
         <item>600000</item>
     </string-array>
 
-    <string name="pref_limit">Limit</string>
-    <string-array name="pref_limit_titles">
+    <!-- Limit -->
+    <string name="pref_limit_key">limit</string>
+    <string name="pref_limit_title">Limit</string>
+    <string name="pref_limit_default">0</string>
+    <string-array name="pref_limit_entries">
         <item>None</item>
         <item>10 images</item>
         <item>20 images</item>
         <item>50 images</item>
         <item>100 images</item>
     </string-array>
-    <string-array name="pref_limit_values">
+    <string-array name="pref_limit_entry_values">
         <item>0</item>
         <item>10</item>
         <item>20</item>
@@ -72,18 +87,22 @@
         <item>100</item>
     </string-array>
 
-    <string name="pref_category_camera">Camera</string>
-
-    <string name="pref_camera">Camera</string>
-    <string name="pref_camera_front">Front</string>
+    <!-- Camera -->
+    <string name="pref_camera_key">camera</string>
+    <string name="pref_camera_title">Camera</string>
+    <string name="pref_camera_default">0</string>
     <string name="pref_camera_back">Back</string>
+    <string name="pref_camera_front">Front</string>
 
-    <string name="pref_focus">Focus</string>
-    <string-array name="pref_focus_titles">
+    <!-- Focus -->
+    <string name="pref_focus_key">focus</string>
+    <string name="pref_focus_title">Focus</string>
+    <string name="pref_focus_default">auto</string>
+    <string-array name="pref_focus_entries">
         <item>None</item>
         <item>Auto</item>
     </string-array>
-    <string-array name="pref_focus_values">
+    <string-array name="pref_focus_entry_values">
         <item>none</item>
         <item>auto</item>
     </string-array>

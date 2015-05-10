@@ -5,18 +5,18 @@
         android:title="@string/pref_category_timing">
 
         <ListPreference
-            android:key="interval"
-            android:title="@string/pref_interval"
-            android:entries="@array/pref_interval_titles"
-            android:entryValues="@array/pref_interval_values"
-            android:defaultValue="5000" />
+            android:key="@string/pref_interval_key"
+            android:title="@string/pref_interval_title"
+            android:entries="@array/pref_interval_entries"
+            android:entryValues="@array/pref_interval_entry_values"
+            android:defaultValue="@string/pref_interval_default" />
 
         <ListPreference
-            android:key="limit"
-            android:title="@string/pref_limit"
-            android:entries="@array/pref_limit_titles"
-            android:entryValues="@array/pref_limit_values"
-            android:defaultValue="0" />
+            android:key="@string/pref_limit_key"
+            android:title="@string/pref_limit_title"
+            android:entries="@array/pref_limit_entries"
+            android:entryValues="@array/pref_limit_entry_values"
+            android:defaultValue="@string/pref_limit_default" />
 
     </PreferenceCategory>
 
@@ -24,15 +24,15 @@
         android:title="@string/pref_category_camera">
 
         <com.nathanosman.chronosnap.preference.CameraPreference
-            android:key="camera"
-            android:title="@string/pref_camera" />
+            android:key="@string/pref_camera_key"
+            android:title="@string/pref_camera_title" />
 
         <ListPreference
-            android:key="focus"
-            android:title="@string/pref_focus"
-            android:entries="@array/pref_focus_titles"
-            android:entryValues="@array/pref_focus_values"
-            android:defaultValue="auto" />
+            android:key="@string/pref_focus_key"
+            android:title="@string/pref_focus_title"
+            android:entries="@array/pref_focus_entries"
+            android:entryValues="@array/pref_focus_entry_values"
+            android:defaultValue="@string/pref_focus_default" />
 
     </PreferenceCategory>
 

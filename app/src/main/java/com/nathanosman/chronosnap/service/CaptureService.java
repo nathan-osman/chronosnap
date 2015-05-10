@@ -72,8 +72,9 @@ public class CaptureService extends Service {
      */
     public static final String EXTRA_IMAGES_REMAINING = "com.nathanosman.chronosnap.extra.IMAGES_REMAINING";
 
-    // Alarm manager and intent for triggering a capture
+    // Data initialized in the constructor
     private AlarmManager mAlarmManager;
+    private SharedPreferences mSharedPreferences;
     private PendingIntent mCaptureIntent;
 
     // Data initialized when the capture begins
@@ -96,6 +97,7 @@ public class CaptureService extends Service {
     public void onCreate() {
 
         mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mCaptureIntent = PendingIntent.getService(this, 0,
                 new Intent(this, CaptureService.class).setAction(ACTION_CAPTURE), 0);
     }
@@ -175,17 +177,16 @@ public class CaptureService extends Service {
         mIndex = 0;
 
         // Load the current settings
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        mInterval = Long.parseLong(pref(R.string.pref_interval_key, R.string.pref_interval_default));
+        mLimit = Integer.parseInt(pref(R.string.pref_limit_key, R.string.pref_limit_default));
 
-        mInterval = Long.parseLong(sharedPreferences.getString("interval", ""));
-        mLimit = Integer.parseInt(sharedPreferences.getString("limit", ""));
-
-        // Generate a name for the sequence based on the current date and time
-        int cameraId = Integer.parseInt(sharedPreferences.getString("camera", ""));
-        boolean autofocus = sharedPreferences.getString("focus", "").equals("auto");
+        // Load the camera and focus settings
+        int cameraId = Integer.parseInt(pref(R.string.pref_camera_key, R.string.pref_camera_default));
+        boolean autofocus = pref(R.string.pref_focus_key, R.string.pref_focus_default).equals("auto");
 
         // TODO: user should be able to select the sequence name
 
+        // Generate a name for the sequence based on the current date and time
         String sequenceName = new SimpleDateFormat("yyyymmdd_hhmmss").format(new Date());
 
         // Initialize the capturer
@@ -284,6 +285,16 @@ public class CaptureService extends Service {
                 }
             }
         });
+    }
+
+    /**
+     * Retrieve the current value of the specified preference
+     * @param keyId preference key
+     * @param defaultId default preference value
+     * @return current value
+     */
+    private String pref(int keyId, int defaultId) {
+        return mSharedPreferences.getString(getString(keyId), getString(defaultId));
     }
 
     /**

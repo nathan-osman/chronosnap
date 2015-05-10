@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
 import android.text.format.DateUtils;
@@ -32,9 +31,6 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // Initialize settings to their defaults
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
         // Create an intent filter for status updates
         LocalBroadcastManager.getInstance(this).registerReceiver(new BroadcastReceiver() {
@@ -82,10 +78,6 @@ public class MainActivity extends ActionBarActivity {
                     buttonStartStop.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-
-                            //NewSequenceDialogFragment dialog = new NewSequenceDialogFragment();
-                            //dialog.show(getFragmentManager(), "NewSequenceDialogFragment");
-
                             sendAction(CaptureService.ACTION_START_CAPTURE);
                         }
                     });
