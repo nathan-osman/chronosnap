@@ -175,7 +175,6 @@ public class CaptureService extends Service {
         mIndex = 0;
 
         // Load the current settings
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         mInterval = Long.parseLong(sharedPreferences.getString("interval", ""));
