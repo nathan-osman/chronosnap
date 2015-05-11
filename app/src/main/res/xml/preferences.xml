@@ -4,12 +4,9 @@
     <PreferenceCategory
         android:title="@string/pref_category_timing">
 
-        <ListPreference
+        <com.nathanosman.chronosnap.preference.TimeIntervalPreference
             android:key="@string/pref_interval_key"
-            android:title="@string/pref_interval_title"
-            android:entries="@array/pref_interval_entries"
-            android:entryValues="@array/pref_interval_entry_values"
-            android:defaultValue="@string/pref_interval_default" />
+            android:title="@string/pref_interval_title" />
 
         <ListPreference
             android:key="@string/pref_limit_key"

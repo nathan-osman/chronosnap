@@ -1,5 +1,6 @@
 package com.nathanosman.chronosnap.preference;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -18,6 +19,7 @@ import com.nathanosman.chronosnap.R;
  * differently.
  */
 public class SettingsActivity extends PreferenceActivity {
+    private static Context mContext;
 
     /**
      * Fragment populated with settings
@@ -30,7 +32,6 @@ public class SettingsActivity extends PreferenceActivity {
             addPreferencesFromResource(R.xml.preferences);
 
             // Ensure that the summary is updated when preferences change
-            bindPreferenceSummaryToValue(findPreference("interval"));
             bindPreferenceSummaryToValue(findPreference("limit"));
             bindPreferenceSummaryToValue(findPreference("camera"));
             bindPreferenceSummaryToValue(findPreference("focus"));
@@ -75,6 +76,7 @@ public class SettingsActivity extends PreferenceActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mContext = this;
 
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
