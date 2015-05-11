@@ -25,7 +25,8 @@ import com.nathanosman.chronosnap.service.CaptureService;
  * This activity displays the start / stop button as well as the status of a
  * capture in progress.
  */
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity
+        implements NewSequenceDialogFragment.NewSequenceDialogListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,7 +79,9 @@ public class MainActivity extends ActionBarActivity {
                     buttonStartStop.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            sendAction(CaptureService.ACTION_START_CAPTURE);
+
+                            NewSequenceDialogFragment dialog = new NewSequenceDialogFragment();
+                            dialog.show(getFragmentManager(), NewSequenceDialogFragment.class.getSimpleName());
                         }
                     });
 
@@ -110,6 +113,15 @@ public class MainActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onNewSequenceDialogAccept(CharSequence sequenceName) {
+
+        Intent intent = new Intent(this, CaptureService.class);
+        intent.setAction(CaptureService.ACTION_START_CAPTURE);
+        intent.putExtra(CaptureService.EXTRA_SEQUENCE_NAME, sequenceName);
+        startService(intent);
     }
 
     /**

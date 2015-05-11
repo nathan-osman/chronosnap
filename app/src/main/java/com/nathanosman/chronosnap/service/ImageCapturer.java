@@ -57,7 +57,7 @@ public class ImageCapturer {
      * @param autofocus true to force the camera to focus before capture
      * @param sequenceName user-supplied name for the sequence
      */
-    public ImageCapturer(int cameraId, boolean autofocus, String sequenceName) {
+    public ImageCapturer(int cameraId, boolean autofocus, CharSequence sequenceName) {
 
         mCameraId = cameraId;
         mAutofocus = autofocus;

@@ -18,9 +18,6 @@ import android.widget.Toast;
 import com.nathanosman.chronosnap.R;
 import com.nathanosman.chronosnap.ui.MainActivity;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 
 /**
  * Captures images at the predefined interval
@@ -56,6 +53,11 @@ public class CaptureService extends Service {
      * Broadcast containing capture status
      */
     public static final String BROADCAST_STATUS = "com.nathanosman.chronosnap.broadcast.STATUS";
+
+    /**
+     * Sequence name
+     */
+    public static final String EXTRA_SEQUENCE_NAME = "com.nathanosman.chronosnap.extra.SEQUENCE_NAME";
 
     /**
      * Start time of the capture
@@ -117,7 +119,8 @@ public class CaptureService extends Service {
                     broadcastStatus();
                     break;
                 case ACTION_START_CAPTURE:
-                    startCapture();
+                    CharSequence sequenceName = intent.getCharSequenceExtra(EXTRA_SEQUENCE_NAME);
+                    startCapture(sequenceName);
                     break;
                 case ACTION_STOP_CAPTURE:
                     stopCapture();
@@ -158,8 +161,9 @@ public class CaptureService extends Service {
 
     /**
      * Start capturing a sequence of images
+     * @param sequenceName name selected for the sequence
      */
-    private void startCapture() {
+    private void startCapture(CharSequence sequenceName) {
 
         // Prevent a new capture from being started if one is in progress
         if (mStartTime != 0) {
@@ -183,11 +187,6 @@ public class CaptureService extends Service {
         // Load the camera and focus settings
         int cameraId = Integer.parseInt(pref(R.string.pref_camera_key, R.string.pref_camera_default));
         boolean autofocus = pref(R.string.pref_focus_key, R.string.pref_focus_default).equals("auto");
-
-        // TODO: user should be able to select the sequence name
-
-        // Generate a name for the sequence based on the current date and time
-        String sequenceName = new SimpleDateFormat("yyyymmdd_hhmmss").format(new Date());
 
         // Initialize the capturer
         mImageCapturer = new ImageCapturer(cameraId, autofocus, sequenceName);
