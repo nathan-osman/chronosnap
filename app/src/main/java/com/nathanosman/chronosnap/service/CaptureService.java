@@ -195,7 +195,7 @@ public class CaptureService extends Service {
         boolean autofocus = pref(R.string.pref_focus_key, R.string.pref_focus_default).equals("auto");
 
         // Initialize the capturer
-        mImageCapturer = new ImageCapturer(cameraId, autofocus, sequenceName);
+        mImageCapturer = new ImageCapturer(this, cameraId, autofocus, sequenceName);
 
         // Broadcast the new status (that the capture has started) and set an alarm
         broadcastStatus();

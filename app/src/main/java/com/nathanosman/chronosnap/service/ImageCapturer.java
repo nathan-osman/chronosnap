@@ -1,7 +1,10 @@
 package com.nathanosman.chronosnap.service;
 
+import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 
@@ -38,6 +41,7 @@ public class ImageCapturer {
     }
 
     // Data initialized in the constructor
+    private Context mContext;
     private int mCameraId;
     private boolean mAutofocus;
     private File mSequencePath;
@@ -53,12 +57,14 @@ public class ImageCapturer {
 
     /**
      * Initialize the capturer
+     * @param context calling context
      * @param cameraId ID of the camera to use for capturing
      * @param autofocus true to force the camera to focus before capture
      * @param sequenceName user-supplied name for the sequence
      */
-    public ImageCapturer(int cameraId, boolean autofocus, CharSequence sequenceName) {
+    public ImageCapturer(Context context, int cameraId, boolean autofocus, CharSequence sequenceName) {
 
+        mContext = context;
         mCameraId = cameraId;
         mAutofocus = autofocus;
         mSequencePath = new File(
@@ -207,8 +213,17 @@ public class ImageCapturer {
                     return;
                 }
 
-                // Indicate that the capture was successful
-                mCaptureCallback.onComplete(null);
+                // Have the media scanner add the file
+                MediaScannerConnection.scanFile(mContext, new String[]{jpegFile.getAbsolutePath()},
+                        null, new MediaScannerConnection.OnScanCompletedListener() {
+
+                            @Override
+                            public void onScanCompleted(String path, Uri uri) {
+
+                                // Indicate that the capture was successful
+                                mCaptureCallback.onComplete(null);
+                            }
+                        });
             }
         });
     }
