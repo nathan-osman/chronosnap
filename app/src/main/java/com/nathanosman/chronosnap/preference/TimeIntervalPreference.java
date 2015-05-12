@@ -70,9 +70,12 @@ public class TimeIntervalPreference extends DialogPreference {
         if (positiveResult) {
 
             // Calculate the total time in millis
-            long currentValue = mHourPicker.getValue() * HOUR +
-                    mMinutePicker.getValue() * MINUTE + mSecondPicker.getValue() * SECOND;
-            persistString(String.valueOf(currentValue));
+            String currentValue = String.valueOf(mHourPicker.getValue() * HOUR +
+                    mMinutePicker.getValue() * MINUTE + mSecondPicker.getValue() * SECOND);
+
+            if (callChangeListener(currentValue)) {
+                persistString(currentValue);
+            }
         }
     }
 }
