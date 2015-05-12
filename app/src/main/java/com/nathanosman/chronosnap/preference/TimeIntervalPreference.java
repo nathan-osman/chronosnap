@@ -1,48 +1,78 @@
 package com.nathanosman.chronosnap.preference;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.preference.DialogPreference;
-import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.EditText;
-import android.widget.Spinner;
+import android.widget.NumberPicker;
 
 import com.nathanosman.chronosnap.R;
 
+
 /**
+ * Custom preference type for entering a time interval
  * @author sravan953
  */
 public class TimeIntervalPreference extends DialogPreference {
-    Spinner spinner;
-    EditText editText;
 
+    // Handy values for time conversion
+    private static final long SECOND = 1000;
+    private static final long MINUTE = 60 * SECOND;
+    private static final long HOUR = 60 * MINUTE;
+
+    // References to the pickers
+    private NumberPicker mHourPicker;
+    private NumberPicker mMinutePicker;
+    private NumberPicker mSecondPicker;
+
+    /**
+     * Initialize the dialog with the custom layout
+     */
     public TimeIntervalPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
         setDialogLayoutResource(R.layout.pref_time);
     }
 
+    /**
+     * Perform initialization of the view items
+     */
     @Override
     protected void onBindDialogView(View view) {
-        spinner = (Spinner)view.findViewById(R.id.spinner);
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(view.getContext(), R.array.pref_interval_types, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
+        super.onBindDialogView(view);
 
-        editText = (EditText)view.findViewById(R.id.timeInterval);
+        // Retrieve the current value
+        long currentValue = Long.valueOf(getPersistedString(
+                getContext().getString(R.string.pref_interval_default)));
+
+        // Obtain references to the pickers and initialize them with the correct value
+        mHourPicker = (NumberPicker) view.findViewById(R.id.hourPicker);
+        mHourPicker.setMinValue(0);
+        mHourPicker.setMaxValue(23);
+        mHourPicker.setValue((int) (currentValue / HOUR));
+
+        mMinutePicker = (NumberPicker) view.findViewById(R.id.minutePicker);
+        mMinutePicker.setMinValue(0);
+        mMinutePicker.setMaxValue(59);
+        mMinutePicker.setValue((int) (currentValue / MINUTE));
+
+        mSecondPicker = (NumberPicker) view.findViewById(R.id.secondPicker);
+        mSecondPicker.setMinValue(0);
+        mSecondPicker.setMaxValue(59);
+        mSecondPicker.setValue((int) (currentValue / SECOND));
     }
 
+    /**
+     * Store the value of the pickers
+     */
     @Override
     protected void onDialogClosed(boolean positiveResult) {
-        if(positiveResult) {
-            String type = spinner.getSelectedItem().toString();
-            int time = Integer.parseInt(editText.getText().toString());
 
-            SharedPreferences.Editor pEditor = PreferenceManager.getDefaultSharedPreferences(getContext()).edit();
-            pEditor.putString(getContext().getResources().getString(R.string.pref_interval_type_key), type).commit();
-            pEditor.putString(getContext().getResources().getString(R.string.pref_interval_key), String.valueOf(time)).commit();
+        if (positiveResult) {
+
+            // Calculate the total time in millis
+            long currentValue = mHourPicker.getValue() * HOUR +
+                    mMinutePicker.getValue() * MINUTE + mSecondPicker.getValue() * SECOND;
+            persistString(String.valueOf(currentValue));
         }
     }
 }
