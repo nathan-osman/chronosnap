@@ -7,6 +7,7 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 import com.nathanosman.chronosnap.R;
 
@@ -49,7 +50,7 @@ public class SettingsActivity extends PreferenceActivity {
 
                 // The method for updating the summary differs based on the preference type
                 if (preference instanceof TimeIntervalPreference) {
-                    preference.setSummary(intervalSummary(Integer.parseInt(stringValue)));
+                    preference.setSummary(((TimeIntervalPreference) preference).getSummary(stringValue));
                 } else if (preference instanceof ListPreference) {
                     ListPreference listPreference = (ListPreference) preference;
                     int index = listPreference.findIndexOfValue(stringValue);
@@ -62,16 +63,6 @@ public class SettingsActivity extends PreferenceActivity {
                 return true;
             }
         };
-
-        /**
-         * Generate a locale-aware summary for interval
-         */
-        public static CharSequence intervalSummary(int seconds) {
-
-            // TODO: display hours / minutes / seconds
-
-            return String.format("%d seconds", seconds / 1000);
-        }
 
         /**
          * Bind a preference's value to its summary and load the initial value

@@ -81,8 +81,7 @@ public class CaptureService extends Service {
 
     // Data initialized when the capture begins
     private long mStartTime;
-    private String mIntervalRaw;
-    private long mIntervalMillis;
+    private long mInterval;
     private int mIndex;
     private int mLimit;
 
@@ -182,12 +181,7 @@ public class CaptureService extends Service {
         mIndex = 0;
 
         // Load the current settings
-        mIntervalRaw = pref(R.string.pref_interval_type_key, R.string.pref_interval_default);
-        mIntervalMillis = Long.parseLong(pref(R.string.pref_interval_key, R.string.pref_interval_default));
-        if(mIntervalRaw.equals("seconds"))
-            mIntervalMillis *= 1000;
-        else
-            mIntervalMillis *= 60 * 1000;
+        mInterval = Long.parseLong(pref(R.string.pref_interval_key, R.string.pref_interval_default));
         mLimit = Integer.parseInt(pref(R.string.pref_limit_key, R.string.pref_limit_default));
 
         // Load the camera and focus settings
@@ -199,7 +193,7 @@ public class CaptureService extends Service {
 
         // Broadcast the new status (that the capture has started) and set an alarm
         broadcastStatus();
-        setAlarm(System.currentTimeMillis() + mIntervalMillis);
+        setAlarm(System.currentTimeMillis() + mInterval);
     }
 
     /**
@@ -286,7 +280,7 @@ public class CaptureService extends Service {
                     mImageCapturer.close();
 
                     // Set an alarm for the next capture
-                    setAlarm(captureTime + mIntervalMillis);
+                    setAlarm(captureTime + mInterval);
                 }
             }
         });
