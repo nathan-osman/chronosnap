@@ -214,7 +214,6 @@ public class CaptureService extends Service {
             mPendingShutdown = true;
         } else {
 
-            // TODO: this doesn't do anything currently but will be needed later
             mImageCapturer.close();
             shutdown();
         }
@@ -228,10 +227,10 @@ public class CaptureService extends Service {
      */
     private void capture() {
 
-        log("Capturing image #" + String.valueOf(mIndex) + ".");
-
         // Grab the current time for calculating the next alarm interval later
         final long captureTime = SystemClock.elapsedRealtime();
+
+        log("Capturing image #" + String.valueOf(mIndex) + " @ " + String.valueOf(captureTime) + ".");
 
         // Signal that the capture is in progress
         mCaptureInProgress = true;
@@ -277,8 +276,10 @@ public class CaptureService extends Service {
                     mIndex++;
                     broadcastStatus();
 
-                    // TODO: check to see if closing the camera is necessary
-                    mImageCapturer.close();
+                    // If the interval is greater than 10s, close the camera - otherwise keep it open
+                    if (mInterval > 10000) {
+                        mImageCapturer.close();
+                    }
 
                     // Set an alarm for the next capture
                     setAlarm(captureTime + mInterval);
@@ -344,6 +345,8 @@ public class CaptureService extends Service {
      */
     private void setAlarm(long triggerAtMillis) {
 
+        log("Setting alarm for " + String.valueOf(triggerAtMillis) + ".");
+
         // For KitKat and newer devices, we need to use setExact or we don't
         // end up with the same level of precision as earlier versions
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -362,7 +365,7 @@ public class CaptureService extends Service {
      */
     private void shutdown() {
 
-        log("Shutting down service.");
+        log("Shutting down capture.");
 
         // Cancel any pending alarms and leave the foreground
         mAlarmManager.cancel(mCaptureIntent);
@@ -371,8 +374,5 @@ public class CaptureService extends Service {
         // Reset the start time and broadcast this status
         mStartTime = 0;
         broadcastStatus();
-
-        // Stop the service since there is no need to keep it running
-        stopSelf();
     }
 }
