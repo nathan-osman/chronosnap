@@ -2,6 +2,7 @@ package com.nathanosman.chronosnap.service;
 
 import android.app.AlarmManager;
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -14,7 +15,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.nathanosman.chronosnap.R;
 import com.nathanosman.chronosnap.ui.MainActivity;
@@ -175,7 +175,7 @@ public class CaptureService extends Service {
 
         log("Starting image capture.");
 
-        createNotification();
+        displayPersistentNotification();
 
         // Set the start time and reset the index
         mStartTime = SystemClock.elapsedRealtime();
@@ -260,11 +260,9 @@ public class CaptureService extends Service {
                     // Close the camera since it won't be needed anymore
                     mImageCapturer.close();
 
-                    // TODO: display an actual error notification instead of a toast
-
-                    // If an error occurred, then display a toast
-                    if (errorMessage != null) {
-                        Toast.makeText(CaptureService.this, errorMessage, Toast.LENGTH_LONG).show();
+                    // Display a notification unless the capture was stopped
+                    if (!mPendingShutdown) {
+                        displayCompletionNotification(errorMessage);
                     }
 
                     mPendingShutdown = false;
@@ -307,11 +305,11 @@ public class CaptureService extends Service {
     }
 
     /**
-     * Create the persistent notification that will be displayed during capture
+     * Display a persistent notification during capture
      *
      * The notification includes an action to immediately stop the capture.
      */
-    private void createNotification() {
+    private void displayPersistentNotification() {
 
         // Create a pending intent that will display the main UI
         PendingIntent mainIntent = PendingIntent.getActivity(this, 0,
@@ -327,16 +325,41 @@ public class CaptureService extends Service {
         // any of the methods that aren't available on the current platform
         Notification notification = new NotificationCompat.Builder(this)
                 .addAction(R.drawable.ic_action_stop, "Stop", stopIntent)
-                .setCategory(Notification.CATEGORY_SERVICE)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
                 .setColor(getResources().getColor(R.color.material_primary))
                 .setContentIntent(mainIntent)
-                .setContentText(getText(R.string.notification_text))
+                .setContentText(getText(R.string.notification_status_progress))
                 .setContentTitle(getText(R.string.notification_title))
                 .setSmallIcon(R.drawable.ic_stat_notify)
                 .build();
 
         // Build the notification and move the service into the foreground
         startForeground(1, notification);
+    }
+
+    /**
+     * Display a notification once the transfer is complete
+     * @param errorMessage a description of the error message or null if no error occurred
+     */
+    private void displayCompletionNotification(String errorMessage) {
+
+        // TODO: error message is not localized
+
+        Notification notification = new NotificationCompat.Builder(this)
+                .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+                .setColor(getResources().getColor(R.color.material_primary))
+                .setContentText(errorMessage == null ?
+                        getText(R.string.notification_status_complete) :
+                        "Error: " + errorMessage)
+                .setContentTitle(getText(R.string.notification_title))
+                .setSmallIcon(R.drawable.ic_stat_notify)
+                .build();
+
+        // Show the notification
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        notificationManager.notify(0, notification);
     }
 
     /**

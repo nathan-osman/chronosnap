@@ -5,7 +5,8 @@
 
     <!-- Notification displayed during capture -->
     <string name="notification_title">ChronoSnap Capture</string>
-    <string name="notification_text">Capture is in progress.</string>
+    <string name="notification_status_progress">Capture is in progress.</string>
+    <string name="notification_status_complete">Capture has completed.</string>
 
     <!-- Toast messages displayed to the user -->
     <string name="toast_error_storage_dir">Error: unable to create storage directory.</string>
