@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
@@ -177,7 +178,7 @@ public class CaptureService extends Service {
         createNotification();
 
         // Set the start time and reset the index
-        mStartTime = System.currentTimeMillis();
+        mStartTime = SystemClock.elapsedRealtime();
         mIndex = 0;
 
         // Load the current settings
@@ -193,7 +194,7 @@ public class CaptureService extends Service {
 
         // Broadcast the new status (that the capture has started) and set an alarm
         broadcastStatus();
-        setAlarm(System.currentTimeMillis() + mInterval);
+        setAlarm(mStartTime + mInterval);
     }
 
     /**
@@ -230,7 +231,7 @@ public class CaptureService extends Service {
         log("Capturing image #" + String.valueOf(mIndex) + ".");
 
         // Grab the current time for calculating the next alarm interval later
-        final long captureTime = System.currentTimeMillis();
+        final long captureTime = SystemClock.elapsedRealtime();
 
         // Signal that the capture is in progress
         mCaptureInProgress = true;
@@ -346,9 +347,9 @@ public class CaptureService extends Service {
         // For KitKat and newer devices, we need to use setExact or we don't
         // end up with the same level of precision as earlier versions
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            mAlarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, mCaptureIntent);
+            mAlarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAtMillis, mCaptureIntent);
         } else {
-            mAlarmManager.set(AlarmManager.RTC_WAKEUP, triggerAtMillis, mCaptureIntent);
+            mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAtMillis, mCaptureIntent);
         }
     }
 
